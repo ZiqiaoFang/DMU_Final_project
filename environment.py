@@ -130,7 +130,7 @@ class KuhnPokerState:
         self.players_hands = random.sample(KuhnPokerState.DECK, 2)  # Deal two cards to two players
         self.bets = [1, 1]  # Individual player bets. Ante is 1
         self.folded = [False, False]  # Track if players have folded
-        self.current_player_index = random.randint(0, 1)  # Random starting player
+        self.current_player_index = 0  # Random starting player
         self.bet_amount = None  # Amount of the bet. None if no bet has been made
         self.winner = None  # Winner of the game
 
