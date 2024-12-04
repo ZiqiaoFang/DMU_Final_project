@@ -7,14 +7,19 @@ class ForwardSearchPlayer(Player):
         # Initialize belief as uniform distribution over opponent cards
         self.belief_state = {card: 1/3 for card in KuhnPokerState.DECK}
         
-    def reset_belief(self):
-        """Reset belief to uniform distribution"""
-        self.belief_state = {card: 1/3 for card in KuhnPokerState.DECK}
+    def initialize_belief(self, player_card: int):
+        """Initialize belief as uniform distribution over the two possible opponent cards"""
+        self.belief_state = {card: 0.5 for card in KuhnPokerState.DECK if card != player_card}
         
     def update_belief(self, history: KuhnPokerHistory, player_id: int):
         """Update beliefs based on observed actions"""
         last_obs = history.get_last_observation()
         
+        # Initialize belief if this is our first observation
+        if self.belief_state is None:
+            self.initialize_belief(last_obs.player_hand)
+            return
+            
         if len(history.observations) < 2:
             return  # No actions to update on yet
             
@@ -26,16 +31,15 @@ class ForwardSearchPlayer(Player):
             new_belief = {}
             total_weight = 0
             
-            for card in KuhnPokerState.DECK:
-                if card != last_obs.player_hand:  # Skip our own card
-                    # Calculate likelihood of action given card
-                    if action > 0:  # Bet/Call
-                        likelihood = 0.7 if card > last_obs.player_hand else 0.3
-                    else:  # Check/Fold
-                        likelihood = 0.3 if card > last_obs.player_hand else 0.7
-                        
-                    new_belief[card] = self.belief_state[card] * likelihood
-                    total_weight += new_belief[card]
+            for card in self.belief_state:  # Only iterate over the two possible cards
+                # Calculate likelihood of action given card
+                if action > 0:  # Bet/Call
+                    likelihood = 0.7 if card > last_obs.player_hand else 0.3
+                else:  # Check/Fold
+                    likelihood = 0.3 if card > last_obs.player_hand else 0.7
+                    
+                new_belief[card] = self.belief_state[card] * likelihood
+                total_weight += new_belief[card]
             
             # Normalize beliefs
             if total_weight > 0:
